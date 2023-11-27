@@ -1,0 +1,32 @@
+CLASS zcl_advent_2023_16 DEFINITION
+  PUBLIC
+  INHERITING FROM zcl_advent_2023_main
+  FINAL
+  CREATE PUBLIC .
+
+  PUBLIC SECTION.
+    METHODS part_1 REDEFINITION.
+    METHODS part_2 REDEFINITION.
+
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+
+ENDCLASS.
+
+
+
+CLASS zcl_advent_2023_16 IMPLEMENTATION.
+
+  METHOD part_1.
+
+    result = |todo|.
+
+  ENDMETHOD.
+
+  METHOD part_2.
+
+    result = |todo|.
+
+  ENDMETHOD.
+
+ENDCLASS.
