@@ -1,6 +1,8 @@
 # abap-advent-2023-template
 Template for Advent of Code 2023, in ABAP + abap2ui5
 
+(Solutions in my [abap-advent-2023](https://github.com/joltdx/abap-advent-2023))
+
 This repo will not contain my solutions, but is intended to store:
 - The prepared "empty" solution classes, including
   - A method for each expected part
@@ -18,6 +20,6 @@ This repo will not contain my solutions, but is intended to store:
 Have fun!
 
 
-## ABAP2UI5 Frontend
+## abap2UI5 Frontend
 ![image](https://github.com/joltdx/abap-advent-2023-template/assets/74537631/07bd05e9-6787-4f25-a343-c1036ee9815c)
 (This image is before the start of this years edition, so the data is from my testing the 2020 solution)
