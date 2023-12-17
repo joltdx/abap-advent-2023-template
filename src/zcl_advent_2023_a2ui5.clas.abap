@@ -25,36 +25,49 @@ CLASS zcl_advent_2023_a2ui5 DEFINITION
     DATA app_is_initialized TYPE abap_bool.
     DATA form_visible TYPE abap_bool.
 
+    TYPES:
+      BEGIN OF ty_day_tile_data,
+        day       TYPE string,
+        random    TYPE i,
+        completed TYPE abap_bool,
+      END OF ty_day_tile_data.
+
+
+
     " Having these as a table would be the prefered way, obviously... However they're used
     " in something that is not, to my current knowledge, possible to have as items under
     " a control that can be bound to a table...
     " Sorry, it's quick and dirty in purpose
     " There's no need to be worried, it works just fine :)
-    DATA completed_flag_day_1 TYPE abap_bool.
-    DATA completed_flag_day_2 TYPE abap_bool.
-    DATA completed_flag_day_3 TYPE abap_bool.
-    DATA completed_flag_day_4 TYPE abap_bool.
-    DATA completed_flag_day_5 TYPE abap_bool.
-    DATA completed_flag_day_6 TYPE abap_bool.
-    DATA completed_flag_day_7 TYPE abap_bool.
-    DATA completed_flag_day_8 TYPE abap_bool.
-    DATA completed_flag_day_9 TYPE abap_bool.
-    DATA completed_flag_day_10 TYPE abap_bool.
-    DATA completed_flag_day_11 TYPE abap_bool.
-    DATA completed_flag_day_12 TYPE abap_bool.
-    DATA completed_flag_day_13 TYPE abap_bool.
-    DATA completed_flag_day_14 TYPE abap_bool.
-    DATA completed_flag_day_15 TYPE abap_bool.
-    DATA completed_flag_day_16 TYPE abap_bool.
-    DATA completed_flag_day_17 TYPE abap_bool.
-    DATA completed_flag_day_18 TYPE abap_bool.
-    DATA completed_flag_day_19 TYPE abap_bool.
-    DATA completed_flag_day_20 TYPE abap_bool.
-    DATA completed_flag_day_21 TYPE abap_bool.
-    DATA completed_flag_day_22 TYPE abap_bool.
-    DATA completed_flag_day_23 TYPE abap_bool.
-    DATA completed_flag_day_24 TYPE abap_bool.
-    DATA completed_flag_day_25 TYPE abap_bool.
+
+    " lets better update abap2UI5 and use this :)
+    DATA day_tile_data TYPE STANDARD TABLE OF ty_day_tile_data WITH EMPTY KEY.
+
+*    DATA completed_flag_day_1 TYPE abap_bool.
+*    DATA completed_flag_day_2 TYPE abap_bool.
+*    DATA completed_flag_day_3 TYPE abap_bool.
+*    DATA completed_flag_day_4 TYPE abap_bool.
+*    DATA completed_flag_day_5 TYPE abap_bool.
+*    DATA completed_flag_day_6 TYPE abap_bool.
+*    DATA completed_flag_day_7 TYPE abap_bool.
+*    DATA completed_flag_day_8 TYPE abap_bool.
+*    DATA completed_flag_day_9 TYPE abap_bool.
+*    DATA completed_flag_day_10 TYPE abap_bool.
+*    DATA completed_flag_day_11 TYPE abap_bool.
+*    DATA completed_flag_day_12 TYPE abap_bool.
+*    DATA completed_flag_day_13 TYPE abap_bool.
+*    DATA completed_flag_day_14 TYPE abap_bool.
+*    DATA completed_flag_day_15 TYPE abap_bool.
+*    DATA completed_flag_day_16 TYPE abap_bool.
+*    DATA completed_flag_day_17 TYPE abap_bool.
+*    DATA completed_flag_day_18 TYPE abap_bool.
+*    DATA completed_flag_day_19 TYPE abap_bool.
+*    DATA completed_flag_day_20 TYPE abap_bool.
+*    DATA completed_flag_day_21 TYPE abap_bool.
+*    DATA completed_flag_day_22 TYPE abap_bool.
+*    DATA completed_flag_day_23 TYPE abap_bool.
+*    DATA completed_flag_day_24 TYPE abap_bool.
+*    DATA completed_flag_day_25 TYPE abap_bool.
 
   PROTECTED SECTION.
   PRIVATE SECTION.
@@ -161,14 +174,6 @@ CLASS zcl_advent_2023_a2ui5 IMPLEMENTATION.
 
   METHOD initialize_app.
 
-    TYPES:
-      BEGIN OF ty_day_tile_data,
-        day    TYPE string,
-        random TYPE i,
-      END OF ty_day_tile_data.
-
-    DATA day_tile_data TYPE STANDARD TABLE OF ty_day_tile_data WITH EMPTY KEY.
-
 
     DATA(all_days_data) = NEW zcl_advent_2023_dao( )->load_all_days_data( ).
 
@@ -179,12 +184,14 @@ CLASS zcl_advent_2023_a2ui5 IMPLEMENTATION.
 
     DO 25 TIMES.
       DATA(this_day_data) = VALUE ty_day_tile_data( day       = sy-index
-                                                    random    = random->get_next( ) ).
+                                                    random    = random->get_next( )
+                                                    completed = VALUE #( all_days_data[ day = sy-index ]-completed OPTIONAL )
+                                                    ).
 
       INSERT this_day_data INTO TABLE day_tile_data.
 
-      set_completed_flag( day    = CONV #( this_day_data-day )
-                          status = VALUE #( all_days_data[ day = sy-index ]-completed OPTIONAL ) ).
+*      set_completed_flag( day    = CONV #( this_day_data-day )
+*                          status = VALUE #( all_days_data[ day = sy-index ]-completed OPTIONAL ) ).
 
     ENDDO.
     SORT day_tile_data BY random.
@@ -214,6 +221,7 @@ CLASS zcl_advent_2023_a2ui5 IMPLEMENTATION.
                                ).
 
     LOOP AT day_tile_data ASSIGNING FIELD-SYMBOL(<day>).
+      DATA(tabix) = sy-tabix.
       DATA(day) = <day>-day.
 
       panel->generic_tile(
@@ -221,13 +229,15 @@ CLASS zcl_advent_2023_a2ui5 IMPLEMENTATION.
                press     = client->_event( val   = event_id-tile_pressed
                                            t_arg = VALUE #( ( day ) ) )
                frametype = 'OneByHalf'
-               header    = get_completed_flag_binding( day )
+*               header    = get_completed_flag_binding( day )
+               header    = '{= $' && client->_bind_edit( val = <day>-completed tab = day_tile_data tab_index = tabix ) && ' ? "Completed" : "" }'
              )->get(
                 )->tile_content(
                    )->get(
                       )->numeric_content(
                            value      = day
                          ).
+
     ENDLOOP.
 
     panel = top_hbox->hbox(
@@ -353,58 +363,58 @@ CLASS zcl_advent_2023_a2ui5 IMPLEMENTATION.
     " This is a quick and dirty fix that works just fine
     " This is purposefully quick and dirty - and there's no need to be worried, it works just fine :)
 
-    CASE day.
-      WHEN 1.
-        result = '{= $' && client->_bind( completed_flag_day_1 ) && ' ? "Completed" : "" }'.
-      WHEN 2.
-        result = '{= $' && client->_bind( completed_flag_day_2 ) && ' ? "Completed" : "" }'.
-      WHEN 3.
-        result = '{= $' && client->_bind( completed_flag_day_3 ) && ' ? "Completed" : "" }'.
-      WHEN 4.
-        result = '{= $' && client->_bind( completed_flag_day_4 ) && ' ? "Completed" : "" }'.
-      WHEN 5.
-        result = '{= $' && client->_bind( completed_flag_day_5 ) && ' ? "Completed" : "" }'.
-      WHEN 6.
-        result = '{= $' && client->_bind( completed_flag_day_6 ) && ' ? "Completed" : "" }'.
-      WHEN 7.
-        result = '{= $' && client->_bind( completed_flag_day_7 ) && ' ? "Completed" : "" }'.
-      WHEN 8.
-        result = '{= $' && client->_bind( completed_flag_day_8 ) && ' ? "Completed" : "" }'.
-      WHEN 9.
-        result = '{= $' && client->_bind( completed_flag_day_9 ) && ' ? "Completed" : "" }'.
-      WHEN 10.
-        result = '{= $' && client->_bind( completed_flag_day_10 ) && ' ? "Completed" : "" }'.
-      WHEN 11.
-        result = '{= $' && client->_bind( completed_flag_day_11 ) && ' ? "Completed" : "" }'.
-      WHEN 12.
-        result = '{= $' && client->_bind( completed_flag_day_12 ) && ' ? "Completed" : "" }'.
-      WHEN 13.
-        result = '{= $' && client->_bind( completed_flag_day_13 ) && ' ? "Completed" : "" }'.
-      WHEN 14.
-        result = '{= $' && client->_bind( completed_flag_day_14 ) && ' ? "Completed" : "" }'.
-      WHEN 15.
-        result = '{= $' && client->_bind( completed_flag_day_15 ) && ' ? "Completed" : "" }'.
-      WHEN 16.
-        result = '{= $' && client->_bind( completed_flag_day_16 ) && ' ? "Completed" : "" }'.
-      WHEN 17.
-        result = '{= $' && client->_bind( completed_flag_day_17 ) && ' ? "Completed" : "" }'.
-      WHEN 18.
-        result = '{= $' && client->_bind( completed_flag_day_18 ) && ' ? "Completed" : "" }'.
-      WHEN 19.
-        result = '{= $' && client->_bind( completed_flag_day_19 ) && ' ? "Completed" : "" }'.
-      WHEN 20.
-        result = '{= $' && client->_bind( completed_flag_day_20 ) && ' ? "Completed" : "" }'.
-      WHEN 21.
-        result = '{= $' && client->_bind( completed_flag_day_21 ) && ' ? "Completed" : "" }'.
-      WHEN 22.
-        result = '{= $' && client->_bind( completed_flag_day_22 ) && ' ? "Completed" : "" }'.
-      WHEN 23.
-        result = '{= $' && client->_bind( completed_flag_day_23 ) && ' ? "Completed" : "" }'.
-      WHEN 24.
-        result = '{= $' && client->_bind( completed_flag_day_24 ) && ' ? "Completed" : "" }'.
-      WHEN 25.
-        result = '{= $' && client->_bind( completed_flag_day_25 ) && ' ? "Completed" : "" }'.
-    ENDCASE.
+*    CASE day.
+*      WHEN 1.
+*        result = '{= $' && client->_bind( completed_flag_day_1 ) && ' ? "Completed" : "" }'.
+*      WHEN 2.
+*        result = '{= $' && client->_bind( completed_flag_day_2 ) && ' ? "Completed" : "" }'.
+*      WHEN 3.
+*        result = '{= $' && client->_bind( completed_flag_day_3 ) && ' ? "Completed" : "" }'.
+*      WHEN 4.
+*        result = '{= $' && client->_bind( completed_flag_day_4 ) && ' ? "Completed" : "" }'.
+*      WHEN 5.
+*        result = '{= $' && client->_bind( completed_flag_day_5 ) && ' ? "Completed" : "" }'.
+*      WHEN 6.
+*        result = '{= $' && client->_bind( completed_flag_day_6 ) && ' ? "Completed" : "" }'.
+*      WHEN 7.
+*        result = '{= $' && client->_bind( completed_flag_day_7 ) && ' ? "Completed" : "" }'.
+*      WHEN 8.
+*        result = '{= $' && client->_bind( completed_flag_day_8 ) && ' ? "Completed" : "" }'.
+*      WHEN 9.
+*        result = '{= $' && client->_bind( completed_flag_day_9 ) && ' ? "Completed" : "" }'.
+*      WHEN 10.
+*        result = '{= $' && client->_bind( completed_flag_day_10 ) && ' ? "Completed" : "" }'.
+*      WHEN 11.
+*        result = '{= $' && client->_bind( completed_flag_day_11 ) && ' ? "Completed" : "" }'.
+*      WHEN 12.
+*        result = '{= $' && client->_bind( completed_flag_day_12 ) && ' ? "Completed" : "" }'.
+*      WHEN 13.
+*        result = '{= $' && client->_bind( completed_flag_day_13 ) && ' ? "Completed" : "" }'.
+*      WHEN 14.
+*        result = '{= $' && client->_bind( completed_flag_day_14 ) && ' ? "Completed" : "" }'.
+*      WHEN 15.
+*        result = '{= $' && client->_bind( completed_flag_day_15 ) && ' ? "Completed" : "" }'.
+*      WHEN 16.
+*        result = '{= $' && client->_bind( completed_flag_day_16 ) && ' ? "Completed" : "" }'.
+*      WHEN 17.
+*        result = '{= $' && client->_bind( completed_flag_day_17 ) && ' ? "Completed" : "" }'.
+*      WHEN 18.
+*        result = '{= $' && client->_bind( completed_flag_day_18 ) && ' ? "Completed" : "" }'.
+*      WHEN 19.
+*        result = '{= $' && client->_bind( completed_flag_day_19 ) && ' ? "Completed" : "" }'.
+*      WHEN 20.
+*        result = '{= $' && client->_bind( completed_flag_day_20 ) && ' ? "Completed" : "" }'.
+*      WHEN 21.
+*        result = '{= $' && client->_bind( completed_flag_day_21 ) && ' ? "Completed" : "" }'.
+*      WHEN 22.
+*        result = '{= $' && client->_bind( completed_flag_day_22 ) && ' ? "Completed" : "" }'.
+*      WHEN 23.
+*        result = '{= $' && client->_bind( completed_flag_day_23 ) && ' ? "Completed" : "" }'.
+*      WHEN 24.
+*        result = '{= $' && client->_bind( completed_flag_day_24 ) && ' ? "Completed" : "" }'.
+*      WHEN 25.
+*        result = '{= $' && client->_bind( completed_flag_day_25 ) && ' ? "Completed" : "" }'.
+*    ENDCASE.
 
   ENDMETHOD.
 
